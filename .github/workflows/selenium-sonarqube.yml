@@ -102,7 +102,7 @@ jobs:
           mv sonar-report.html sonar-report-${TIMESTAMP}.html
 
           # Move the renamed file to the desired destination (or workspace)
-          mv sonar-report-${TIMESTAMP}.html $GITHUB_WORKSPACE/sonar-report-${TIMESTAMP}.html
+          #mv sonar-report-${TIMESTAMP}.html $GITHUB_WORKSPACE/sonar-report-${TIMESTAMP}.html
 
       # Step 8: Upload the Report (optional)
       - name: Upload Sonar Report
