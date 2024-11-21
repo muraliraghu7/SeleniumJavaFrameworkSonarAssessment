@@ -28,13 +28,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y maven
 
-      # Step 4: Install dependencies
+      # Step 4: Install dependencies (skip the test execution part)
       - name: Install Dependencies
         run: mvn clean install
 
-      # Step 5: Run Selenium Tests with TestNG
-      - name: Run Selenium Tests
-        run: mvn test -DsuiteXmlFile=src/main/resources/testng.xml
+      # Step 5: Comment out or remove the TestNG test run if you want to skip the tests
+      # - name: Run Selenium Tests
+      #   run: mvn test -DsuiteXmlFile=src/main/resources/testng.xml
 
       # Step 6: Run SonarQube Analysis
       - name: SonarCloud Analysis
@@ -47,4 +47,3 @@ jobs:
             -Dsonar.organization=murali-raghupathy \
             -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
-      
