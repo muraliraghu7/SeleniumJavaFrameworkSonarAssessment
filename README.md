@@ -51,10 +51,3 @@
 
 
 
-### Linked In        : https://www.linkedin.com/in/biswajitsatapathy/   
-### Appium Project   : https://github.com/b7satapathy/Appium_TestNG_Framework
- 
- 
-### Biswajit Satapathy :+1:
-### Contact Email    : b7satapathy@gmail.com
-
