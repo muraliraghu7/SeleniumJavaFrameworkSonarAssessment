@@ -109,4 +109,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: sonar-report
-          path: $GITHUB_WORKSPACE/sonar-report-${TIMESTAMP}.html
+          path: $GITHUB_WORKSPACE/sonar-report.html
