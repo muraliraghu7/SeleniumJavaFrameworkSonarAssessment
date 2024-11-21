@@ -103,10 +103,12 @@ jobs:
 
           # Move the renamed file to the desired destination (or workspace)
           #mv sonar-report-${TIMESTAMP}.html $GITHUB_WORKSPACE/sonar-report-${TIMESTAMP}.html
-
+      # Step 8: Debugging Step - List Files
+      - name: List Files for Debugging
+        run: ls -al $GITHUB_WORKSPACE
       # Step 8: Upload the Report (optional)
       - name: Upload Sonar Report
         uses: actions/upload-artifact@v3
         with:
           name: sonar-report
-          path: $GITHUB_WORKSPACE/sonar-report.html
+          path: sonar-report-*.html
