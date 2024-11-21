@@ -15,8 +15,8 @@ jobs:
       # Step 1: Checkout the code
       - name: Checkout Code
         uses: actions/checkout@v3
-
-      # Step 2: Set up Java 22
+          
+          # Step 2: Set up Java 22
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
@@ -44,3 +44,59 @@ jobs:
             -Dsonar.organization=murali-raghupathy \
             -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
+      # Step 6: Fetch SonarCloud Metrics and Issues
+      - name: Fetch SonarCloud Metrics and Issues
+        run: |
+          # Fetch metrics (e.g., bugs, vulnerabilities, code smells, coverage)
+          curl -u ${{ secrets.SONAR_TOKEN }}: https://sonarcloud.io/api/measures/component?componentKey=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&metricKeys=bugs,vulnerabilities,code_smells,coverage > sonar-metrics.json
+
+          # Fetch unresolved issues
+          curl -u ${{ secrets.SONAR_TOKEN }}: https://sonarcloud.io/api/issues/search?componentKeys=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&resolved=false > sonar-issues.json
+
+      # Step 7: Generate a Report (HTML or CSV)
+      - name: Generate Sonar Report
+        run: |
+          # Use Node.js or Python to convert the JSON data into a readable report
+          # Here is an example using Node.js to generate an HTML report
+
+          # Install necessary Node.js packages
+          npm install axios
+
+          # Create a report
+          echo "Generating SonarQube Report..."
+          node -e "
+          const fs = require('fs');
+          const metrics = require('./sonar-metrics.json');
+          const issues = require('./sonar-issues.json');
+
+          // Create HTML report
+          let report = '<html><body>';
+          report += '<h1>SonarQube Report</h1>';
+          report += '<h2>Metrics</h2>';
+          report += '<ul>';
+          metrics.measures.forEach(measure => {
+            report += \`<li>\${measure.metric}: \${measure.value}</li>\`;
+          });
+          report += '</ul>';
+
+          report += '<h2>Unresolved Issues</h2>';
+          issues.issues.forEach(issue => {
+            report += \`<p>\${issue.message} (\${issue.severity})</p>\`;
+          });
+
+          report += '</body></html>';
+          
+          fs.writeFileSync('sonar-report.html', report);
+          console.log('Report generated: sonar-report.html');
+          "
+          
+          # Save the report as an artifact or upload it elsewhere if needed
+          mv sonar-report.html $GITHUB_WORKSPACE/sonar-report.html
+
+      # Step 8: Upload the Report (optional)
+      - name: Upload Sonar Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: sonar-report
+          path: sonar-report.html
