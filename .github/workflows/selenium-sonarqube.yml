@@ -49,10 +49,10 @@ jobs:
       - name: Fetch SonarCloud Metrics and Issues
         run: |
           # Fetch metrics (e.g., bugs, vulnerabilities, code smells, coverage)
-          curl -u ${{ secrets.SONAR_TOKEN }}: https://sonarcloud.io/api/measures/component?componentKey=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&metricKeys=bugs,vulnerabilities,code_smells,coverage > sonar-metrics.json
+          curl -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/measures/component?componentKey=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&metricKeys=bugs,vulnerabilities,code_smells,coverage" > sonar-metrics.json
 
           # Fetch unresolved issues
-          curl -u ${{ secrets.SONAR_TOKEN }}: https://sonarcloud.io/api/issues/search?componentKeys=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&resolved=false > sonar-issues.json
+          curl -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?componentKeys=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&resolved=false" > sonar-issues.json
 
       # Step 7: Generate a Report (HTML or CSV)
       - name: Generate Sonar Report
