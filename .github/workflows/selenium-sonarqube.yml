@@ -53,6 +53,7 @@ jobs:
           # Log the content of the metrics and issues files for debugging
           cat sonar-metrics.json
           cat sonar-issues.json
+
       # Step 7: Generate a Report (HTML or CSV)
       - name: Generate Sonar Report
         run: |
@@ -67,7 +68,7 @@ jobs:
           console.log('Metrics data:', JSON.stringify(metrics, null, 2));
           let report = '<html><body>';
           report += '<h1>SonarQube Report</h1>';
-          
+
           // Check if 'measures' exists before attempting to process it
           if (metrics && metrics.component && metrics.component.measures) {
             report += '<h2>Metrics</h2>';
@@ -80,6 +81,7 @@ jobs:
             report += '<h2>No Metrics Available</h2>';
             report += '<p>Metrics data is missing or malformed.</p>';
           }
+
           // Check if issues exist
           if (issues && issues.issues) {
             report += '<h2>Unresolved Issues</h2>';
@@ -94,11 +96,17 @@ jobs:
           fs.writeFileSync('sonar-report.html', report);
           console.log('Report generated: sonar-report.html');
           "
-          # Save the report as an artifact or upload it elsewhere if needed
-          mv sonar-report.html $GITHUB_WORKSPACE/sonar-report.html
+
+          # Add a timestamp to the report to ensure a unique name
+          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          mv sonar-report.html sonar-report-${TIMESTAMP}.html
+
+          # Move the renamed file to the desired destination (or workspace)
+          mv sonar-report-${TIMESTAMP}.html $GITHUB_WORKSPACE/sonar-report-${TIMESTAMP}.html
+
       # Step 8: Upload the Report (optional)
       - name: Upload Sonar Report
         uses: actions/upload-artifact@v3
         with:
           name: sonar-report
-          path: sonar-report.html
+          path: $GITHUB_WORKSPACE/sonar-report-${TIMESTAMP}.html
