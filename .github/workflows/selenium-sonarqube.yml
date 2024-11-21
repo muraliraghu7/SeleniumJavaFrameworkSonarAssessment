@@ -54,64 +54,58 @@ jobs:
           # Fetch unresolved issues
           curl -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?componentKeys=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&resolved=false" > sonar-issues.json
 
-          # Log the content of the metrics and issues files for debugging
-          cat sonar-metrics.json
-          cat sonar-issues.json
-
       # Step 7: Generate a Report (HTML or CSV)
       - name: Generate Sonar Report
         run: |
           # Use Node.js to convert the JSON data into a readable report
+          # Here is an example using Node.js to generate an HTML report
+
+          # Install necessary Node.js packages
           npm install axios
 
+          # Create a report
           echo "Generating SonarQube Report..."
-
           node -e "
           const fs = require('fs');
           const metrics = require('./sonar-metrics.json');
           const issues = require('./sonar-issues.json');
 
           // Log the structure of the metrics to debug
-          console.log('Metrics data:', JSON.stringify(metrics, null, 2));
+          console.log('Metrics data:', metrics);
 
-          let report = '<html><body>';
-          report += '<h1>SonarQube Report</h1>';
-          
           // Check if 'measures' exists before attempting to process it
-          if (metrics && metrics.component && metrics.component.measures) {
+          if (metrics && metrics.measures) {
+            let report = '<html><body>';
+            report += '<h1>SonarQube Report</h1>';
             report += '<h2>Metrics</h2>';
             report += '<ul>';
-            metrics.component.measures.forEach(measure => {
+            metrics.measures.forEach(measure => {
               report += \`<li>\${measure.metric}: \${measure.value}</li>\`;
             });
             report += '</ul>';
-          } else {
-            report += '<h2>No Metrics Available</h2>';
-            report += '<p>Metrics data is missing or malformed.</p>';
-          }
 
-          // Check if issues exist
-          if (issues && issues.issues) {
             report += '<h2>Unresolved Issues</h2>';
             issues.issues.forEach(issue => {
               report += \`<p>\${issue.message} (\${issue.severity})</p>\`;
             });
-          } else {
-            report += '<h2>No Unresolved Issues</h2>';
-            report += '<p>No unresolved issues found.</p>';
-          }
 
-          report += '</body></html>';
-          fs.writeFileSync('sonar-report.html', report);
-          console.log('Report generated: sonar-report.html');
+            report += '</body></html>';
+            fs.writeFileSync('sonar-report.html', report);
+            console.log('Report generated: sonar-report.html');
+          } else {
+            console.error('Metrics data is missing or malformed.');
+          }
           "
 
-          # Save the report as an artifact or upload it elsewhere if needed
-          mv sonar-report.html $GITHUB_WORKSPACE/sonar-report.html
+      # Step 8: Rename and move the report
+      - name: Rename and move the report
+        run: |
+          mv sonar-report.html sonar-report-$(date +'%Y%m%d%H%M%S').html
+          mv sonar-report-$(date +'%Y%m%d%H%M%S').html /path/to/destination/
 
-      # Step 8: Upload the Report (optional)
+      # Step 9: Upload the Report (optional)
       - name: Upload Sonar Report
         uses: actions/upload-artifact@v3
         with:
           name: sonar-report
-          path: sonar-report.html
+          path: /path/to/destination/sonar-report-*.html
