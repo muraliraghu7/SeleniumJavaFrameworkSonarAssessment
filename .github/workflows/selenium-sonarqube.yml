@@ -20,23 +20,54 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: '22'
-          distribution: 'temurin' # Recommended distribution (can also use zulu, adopt, etc.)
+          distribution: 'temurin'
 
-      # Step 3: Install Maven
+      # Step 3: Install Chrome dependencies
+      - name: Install Chrome dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            wget \
+            curl \
+            unzip \
+            xz-utils \
+            libgconf-2-4 \
+            libnss3 \
+            libx11-xcb1 \
+            libx264-155 \
+            libappindicator3-1 \
+            libasound2 \
+            libgbm1 \
+            libnspr4 \
+            libnss3 \
+            libxss1
+
+      # Step 4: Install Google Chrome
+      - name: Install Google Chrome
+        run: |
+          wget -q -O - https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb > google-chrome-stable_current_amd64.deb
+          sudo dpkg -i google-chrome-stable_current_amd64.deb
+          sudo apt-get install -f  # Fix any missing dependencies
+
+      # Step 5: Install Maven
       - name: Install Maven
         run: |
           sudo apt-get update
           sudo apt-get install -y maven
 
-      # Step 4: Install dependencies (skip the test execution part)
+      # Step 6: Install dependencies
       - name: Install Dependencies
         run: mvn clean install
 
-      # Step 5: Comment out or remove the TestNG test run if you want to skip the tests
-      # - name: Run Selenium Tests
-      #   run: mvn test -DsuiteXmlFile=src/main/resources/testng.xml
+      # Step 7: Set Chrome path and run tests in headless mode
+      - name: Set Chrome path
+        run: echo "CHROME_BIN=/usr/bin/google-chrome-stable" >> $GITHUB_ENV
 
-      # Step 6: Run SonarQube Analysis
+      # Step 8: Run Selenium Tests with TestNG
+      - name: Run Selenium Tests
+        run: mvn test -DsuiteXmlFile=src/main/resources/testng.xml
+
+      # Step 9: Run SonarQube Analysis
       - name: SonarCloud Analysis
         env:
           SONAR_HOST_URL: https://sonarcloud.io
