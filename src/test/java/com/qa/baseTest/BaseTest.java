@@ -34,7 +34,7 @@ public class BaseTest {
 		
 		try {
 			prop=new Properties();
-			fis=new FileInputStream("src\\main\\java\\com\\qa\\config\\config.properties");
+			fis = new FileInputStream("src/main/java/com/qa/config/config.properties");
 			prop.load(fis);
 		} catch (Exception e) {
 			e.printStackTrace();
