@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-  workflow_dispatch:  # This allows manual trigger of the workflow
+  workflow_dispatch:  # Allows manual trigger of the workflow
 
 jobs:
   build-and-analyze:
@@ -14,11 +14,11 @@ jobs:
     steps:
       # Step 1: Checkout the code
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Step 2: Set up Java 22
       - name: Set up Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '22'
           distribution: 'temurin'
@@ -28,7 +28,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y maven
-      # Step 4: Install dependencies (optional, if you still want to install dependencies but skip tests)
+
+      # Step 4: Install dependencies
       - name: Install Dependencies
         run: mvn clean install -DskipTests
 
@@ -43,22 +44,19 @@ jobs:
             -Dsonar.organization=murali-raghupathy \
             -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
       # Step 6: Fetch SonarCloud Metrics and Issues
       - name: Fetch SonarCloud Metrics and Issues
         run: |
-          # Fetch metrics (e.g., bugs, vulnerabilities, code smells, coverage)
           curl -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/measures/component?componentKey=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&metricKeys=bugs,vulnerabilities,code_smells,coverage" > sonar-metrics.json
-          # Fetch unresolved issues
           curl -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?componentKeys=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&resolved=false" > sonar-issues.json
-          # Log the content of the metrics and issues files for debugging
           cat sonar-metrics.json
           cat sonar-issues.json
 
-      # Step 7: Generate a Report (HTML or CSV)
+      # Step 7: Generate a Report
       - name: Generate Sonar Report
         run: |
           npm install axios
-          echo "Generating SonarQube Report..."
           node -e "
           const fs = require('fs');
           const metrics = require('./sonar-metrics.json');
@@ -66,54 +64,25 @@ jobs:
           const timestamp = new Date().toLocaleString();
 
           let report = '<html><head><title>SonarQube Report</title>';
-          report += '<style>body { font-family: Arial, sans-serif; margin: 20px; }';
-          report += 'h1, h2 { color: #2c3e50; }';
-          report += 'table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }';
-          report += 'th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }';
-          report += 'th { background-color: #f4f4f4; }';
-          report += '.severity-MINOR { color: #2980b9; }';
-          report += '.severity-MAJOR { color: #e67e22; }';
-          report += '.severity-BLOCKER { color: #e74c3c; font-weight: bold; }</style></head><body>';
-
+          report += '<style>body { font-family: Arial; }</style></head><body>';
           report += '<h1>SonarQube Analysis Report</h1>';
           report += \`<p><strong>Generated on:</strong> \${timestamp}</p>\`;
 
-          if (metrics && metrics.component && metrics.component.measures) {
-            report += '<h2>Metrics</h2><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
-            metrics.component.measures.forEach(measure => {
-              report += \`<tr><td>\${measure.metric}</td><td>\${measure.value}</td></tr>\`;
-            });
-            report += '</tbody></table>';
+          if (metrics.component) {
+            report += '<h2>Metrics</h2>';
           } else {
-            report += '<h2>No Metrics Available</h2><p>Metrics data is missing or malformed.</p>';
+            report += '<h2>No Metrics</h2>';
           }
 
-          if (issues && issues.issues && issues.issues.length > 0) {
-            report += '<h2>Unresolved Issues</h2><table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody>';
-            issues.issues.forEach(issue => {
-              const severityClass = \`severity-\${issue.severity}\`;
-              report += \`<tr><td class="\${severityClass}">\${issue.severity}</td><td>\${issue.message}</td><td>\${issue.component}</td></tr>\`;
-            });
-            report += '</tbody></table>';
-          } else {
-            report += '<h2>No Unresolved Issues</h2><p>No unresolved issues found.</p>';
-          }
-
-          report += '</body></html>';
           fs.writeFileSync('sonar-report.html', report);
-          console.log('Report generated: sonar-report.html');
+          console.log('Report generated.');
           "
-
-          # Add a timestamp to the report to ensure a unique name
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
           mv sonar-report.html sonar-report-${TIMESTAMP}.html
 
-      # Step 8: Debugging Step - List Files
-      - name: List Files for Debugging
-        run: ls -al $GITHUB_WORKSPACE
-      # Step 8: Upload the Report (optional)
+      # Step 8: Upload the Report
       - name: Upload Sonar Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sonar-report
           path: sonar-report-*.html
