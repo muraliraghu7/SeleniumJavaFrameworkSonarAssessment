@@ -16,7 +16,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Step 2: Set up Java
+      # Step 2: Set up Java 22
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -50,16 +50,18 @@ jobs:
         run: |
           curl -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/measures/component?componentKey=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&metricKeys=bugs,vulnerabilities,code_smells,coverage" > sonar-metrics.json
           curl -u ${{ secrets.SONAR_TOKEN }}: "https://sonarcloud.io/api/issues/search?componentKeys=muraliraghu7_SeleniumJavaFrameworkSonarAssessment&resolved=false" > sonar-issues.json
+          cat sonar-metrics.json
+          cat sonar-issues.json
 
-      # Step 7: Generate a Detailed Report
+      # Step 7: Generate a Report (HTML or CSV)
       - name: Generate Sonar Report
         run: |
           npm install axios
           echo "Generating SonarQube Report..."
           node -e "
           const fs = require('fs');
-          const metrics = JSON.parse(fs.readFileSync('./sonar-metrics.json'));
-          const issues = JSON.parse(fs.readFileSync('./sonar-issues.json'));
+          const metrics = require('./sonar-metrics.json');
+          const issues = require('./sonar-issues.json');
           const timestamp = new Date().toLocaleString();
           let report = '<html><head><title>SonarQube Report</title>';
           report += '<style>body { font-family: Arial, sans-serif; margin: 20px; }';
@@ -72,34 +74,40 @@ jobs:
           report += '.severity-BLOCKER { color: #e74c3c; font-weight: bold; }</style></head><body>';
           report += '<h1>SonarQube Analysis Report</h1>';
           report += \`<p><strong>Generated on:</strong> \${timestamp}</p>\`;
-
-          // Metrics Section
           if (metrics && metrics.component && metrics.component.measures) {
             report += '<h2>Metrics</h2><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
             metrics.component.measures.forEach(measure => {
               report += \`<tr><td>\${measure.metric}</td><td>\${measure.value}</td></tr>\`;
             });
             report += '</tbody></table>';
+          } else {
+            report += '<h2>No Metrics Available</h2><p>Metrics data is missing or malformed.</p>';
           }
-
-          // Issues Section
-          if (issues && issues.issues) {
-            report += '<h2>Unresolved Issues</h2><table><thead><tr><th>Severity</th><th>Message</th><th>File</th><th>Variable/Package</th></tr></thead><tbody>';
+          if (issues && issues.issues && issues.issues.length > 0) {
+            report += '<h2>Unresolved Issues</h2><table><thead><tr><th>Severity</th><th>Message</th><th>File</th></tr></thead><tbody>';
             issues.issues.forEach(issue => {
-              const variableOrPackage = issue.component || 'Not specified';
-              report += \`<tr class="severity-\${issue.severity}"><td>\${issue.severity}</td><td>\${issue.message}</td><td>\${issue.component}</td><td>\${variableOrPackage}</td></tr>\`;
+              const severityClass = \`severity-\${issue.severity}\`;
+              report += \`<tr><td class="\${severityClass}">\${issue.severity}</td><td>\${issue.message}</td><td>\${issue.component}</td></tr>\`;
             });
             report += '</tbody></table>';
+          } else {
+            report += '<h2>No Unresolved Issues</h2><p>No unresolved issues found.</p>';
           }
-
           report += '</body></html>';
           fs.writeFileSync('sonar-report.html', report);
-          console.log('SonarQube Report generated as sonar-report.html');
+          console.log('Report generated: sonar-report.html');
           "
+          # Add a timestamp to the report to ensure a unique name
+          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          mv sonar-report.html sonar-report-${TIMESTAMP}.html
+          
+          
+          # Move the renamed file to the desired destination (or workspace)
+          #mv sonar-report-${TIMESTAMP}.html $GITHUB_WORKSPACE/sonar-report-${TIMESTAMP}.html
 
-      # Step 8: Upload the Report as Artifact
-      - name: Upload SonarQube Report
-        uses: actions/upload-artifact@v3
+      # Step 8: Upload the Report
+      - name: Upload Sonar Report
+        uses: actions/upload-artifact@v4
         with:
           name: sonar-report
-          path: sonar-report.html
+          path: sonar-report-*.html
