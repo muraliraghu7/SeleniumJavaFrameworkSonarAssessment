@@ -1,11 +1,17 @@
 name: SonarQube Analysis
 
 on:
+  # Triggers the workflow on push to the main branch
   push:
     branches:
       - main
+  # Triggers the workflow on pull requests
   pull_request:
-  workflow_dispatch:  # Allows manual trigger of the workflow
+
+  workflow_dispatch:
+  # Schedule the workflow to run every 4 hours
+  schedule:
+    - cron: "0 */4 * * *" # Runs every 4 hours
 
 jobs:
   build-and-analyze:
@@ -43,7 +49,7 @@ jobs:
             -Dsonar.projectKey=muraliraghu7_SeleniumJavaFrameworkSonarAssessment \
             -Dsonar.organization=murali-raghupathy \
             -Dsonar.host.url=${{ env.SONAR_HOST_URL }} \
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
       # Step 6: Fetch SonarCloud Metrics and Issues
       - name: Fetch SonarCloud Metrics and Issues
@@ -53,7 +59,7 @@ jobs:
           cat sonar-metrics.json
           cat sonar-issues.json
 
-      # Step 7: Generate a Report (HTML or CSV)
+      # Step 7: Generate an HTML Report
       - name: Generate Sonar Report
         run: |
           npm install axios
@@ -100,10 +106,6 @@ jobs:
           # Add a timestamp to the report to ensure a unique name
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
           mv sonar-report.html sonar-report-${TIMESTAMP}.html
-          
-          
-          # Move the renamed file to the desired destination (or workspace)
-          #mv sonar-report-${TIMESTAMP}.html $GITHUB_WORKSPACE/sonar-report-${TIMESTAMP}.html
 
       # Step 8: Upload the Report
       - name: Upload Sonar Report
